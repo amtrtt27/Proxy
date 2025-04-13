@@ -1,5 +1,6 @@
 /*
  * Starter code for proxy lab.
+ * @author Tram Tran <tntran@andrew.cmu.edu>
  * Feel free to modify this code in whatever way you wish.
  */
 
