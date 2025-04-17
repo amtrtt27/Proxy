@@ -157,6 +157,7 @@ void *thread (void *vargp) {
  */
 void doit (int client_fd) {
     char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE];
+    char path[MAXLINE], hostname[MAXLINE];
 
     rio_t rio;
     rio_t rio_end;
@@ -164,7 +165,7 @@ void doit (int client_fd) {
     parser_state parse_state;
 
     if (!parser) {
-        clienterror(clientfd, "500", "Server Error", "Parser Failed!");
+        clienterror(clientfd, "400", "Bad request", "Parser Failed!");
         return;
     }
 
@@ -177,7 +178,15 @@ void doit (int client_fd) {
     }
 
     /* Parsing */
-    parser_parse_line(parser, buf);
+    parse_state = parser_parse_line(parser, buf);
+
+    if (parse_state != REQUEST) {
+        parser_free(parser);
+        clienterror(clientfd, "400", "Bad request", "Parse fail");
+        return;
+    }
+
+    
     
     
     /* Invalid request */
