@@ -95,7 +95,95 @@ void clienterror(int fd, const char *errnum, const char *shortmsg,
     }
 }
 
+
+/**
+ * Code reference: Textbook
+ */
 int main(int argc, char **argv) {
-    printf("%s", header_user_agent);
+    int listenfd;
+    int *connfd;
+    char hostname[MAXLINE], port[MAXLINE];
+    socketlen_t clientlen;
+    struct sockaddr_storage clientaddr;
+    pthread_t tid;
+
+    if (arg != 2) {
+        fprintf(stderr, "usage: %s <domain name>\n", argv[0]);
+        exit(1);
+    }
+    
+    /* Ignore SIGPIPE to prevent crashes when client closes connection early */
+    Signal(SIGPIPE, ISG_IGN);
+
+    /* argv[1] is port number */
+    listenfd = open_listenfd(argv[1]);
+
+    while (1) {
+        clientlen = sizeof(clientaddr);
+        connfd = Malloc(sizeof(int));
+        *connfd = Accept(listenfd, (SA *)&clientaddr, &clientlen);
+
+        getnameinfo((SA *) &clientaddr, clientlen, hostname, MAXLINE, port, MAXLINE, 0);
+        printf("Accepted connection from (%s, %s)\n", hostname, port);
+
+        if (pthread_create(&tid, NULL, thread, connfd) != 0) {
+            perror("Pthread create error");
+            close(*connfd);
+            Free(connfd);
+        }
+    }
     return 0;
+}
+
+/**
+ * @brief
+ */
+void *thread (void *vargp) {
+    int connfd = *((int*) vargp);
+    Pthread_detach(pthread_self());
+    Free(vargp);
+    doit(connfd);
+    Close(connfd);
+    return NULL;
+}
+
+/**
+ * @brief 
+ * - Reads and parses the client's HTTP request
+ * - Connects to the target server
+ * - Builds a valid HTTP request to send to that server
+ * - Sends the request to the end server
+ * - Forwards the end server's response back to the client
+ */
+void doit (int client_fd) {
+    char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE];
+
+    rio_t rio;
+    rio_t rio_end;
+    parser_t *parser = parser_new();
+    parser_state parse_state;
+
+    if (!parser) {
+        clienterror(clientfd, "500", "Server Error", "Parser Failed!");
+        return;
+    }
+
+    rio_readinitb(&rio, client_fd);
+
+    /* Reach EOF or error occured */
+    if (!rio_readlineb(&rio, buf, MAXLINE)) {
+        parser_free(parser);
+        return;
+    }
+
+    /* Parsing */
+    parser_parse_line(parser, buf);
+    
+    
+    /* Invalid request */
+    if (strcasecmp(method, "GET")) {
+        clienterror(client_fd, method, "501", "Not implemented", "Tiny does not support this method");
+        return;
+    }
+
 }
