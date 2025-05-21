@@ -1,8 +1,6 @@
 ####################################################################
 # CS:APP Proxy Lab
 #
-# Student Source Files
-#
 ####################################################################
 
 This directory contains the files you will need for the CS:APP Proxy
@@ -11,8 +9,7 @@ Lab.
 proxy.c
 csapp.h
 csapp.c
-    These are starter files.  csapp.c and csapp.h are described in
-    your textbook.  The version here removes some of the wrapper
+    These are starter files.  The version here removes some of the wrapper
     functions, because they do not support the kind of error handling
     that a server program should.
 
